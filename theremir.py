@@ -15,17 +15,17 @@ class Play ( Thread ):
     self.tmp = 20
 
   def run(self):
-    #audio = open('/dev/audio', 'wb').detach()
-    #audio = sys.stdout
     audio = Popen('aplay', stdin=PIPE).stdin
     buffer = time()
+    buffer_increment = 1
     while not self._halt:
-      freq = 1000 * (self.tmp - 15)
-      for i in range(1, 800):
-        audio.write(chr(int(sin(freq*i) * 100 + 128)))
-      buffer += .1
-      if (buffer - time() > .2):
-        sleep(.1)
+      freq = 440 + 220 * (self.tmp - 15)
+      print(freq)
+      for i in range(1, 8000 * buffer_increment):
+        audio.write(chr(int(sin(freq*i) * 50 + 128)))
+      buffer += buffer_increment
+      while buffer - time() > buffer_increment * 1.2:
+        sleep(buffer_increment / 5)
 
   def halt(self):
     self._halt = True
