@@ -17,11 +17,9 @@ class Play ( Thread ):
   def run(self):
     audio = Popen('aplay', stdin=PIPE).stdin
     buffer_increment = 1
-    #freqs = [523.25,587.33,659.26,698.46,783.99,880.,987.77,1046.5]
     t = time()
     phase = 0
     while not self._halt:
-      print(self.tmp)
       freq = 500 + 500 * ( 1 - ( self.tmp - 21 ) / 9 )
       now = time()
       while (t < now + 0.005):
@@ -30,32 +28,44 @@ class Play ( Thread ):
         audio.write( chr( int( sin( phase ) * 50 + 128 ) ) )
       sleep(.001)
 
-  def halt(self):
+  def stop(self):
     self._halt = True
 
-play = Play()
+class Theremir:
 
-def onChange(e):
-  play.tmp = e.temperature
+  def __init__(self):
+    self.play = None
+    self.sensor = None
 
-def initIR():
-  try:
-    sensor = TemperatureSensor()
-    sensor.openPhidget()
-    sensor.waitForAttach(2000)
-    sensor.setTemperatureChangeTrigger(0, 0.1)
-    sensor.setOnTemperatureChangeHandler(onChange)
-    print('Temperature sensor detected.')
-  except PhidgetException:
-    print('No temperature sensor detected.')
-  except Exception:
-    print('Temperature sensor detection failed. Is the Phidgets library not installed?')
+  def start(self):
+    self.play = Play()
+    self.play.start()
+    self.initIR()
+
+  def stop(self):
+    self.play.stop()
+    if self.sensor: self.sensor.closePhidget()
+
+  def onChange(self, e):
+    self.play.tmp = e.temperature
+
+  def initIR(self):
+    try:
+      sensor = TemperatureSensor()
+      sensor.openPhidget()
+      sensor.waitForAttach(2000)
+      sensor.setTemperatureChangeTrigger(0, 0.1)
+      sensor.setOnTemperatureChangeHandler(self.onChange)
+      print('Temperature sensor detected.')
+    except PhidgetException:
+      print('No temperature sensor detected.')
+    except Exception:
+      print('Temperature sensor detection failed. Is the Phidgets library not installed?')
+    self.sensor = sensor
 
 if __name__ == '__main__':
-  initIR()
-  play = Play()
-  play.daemon = True
-  play.start()
+  t = Theremir()
+  t.start()
   sys.stdin.readline()
-  play.halt()
+  t.stop()
 
