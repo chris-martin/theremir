@@ -16,16 +16,19 @@ class Play ( Thread ):
 
   def run(self):
     audio = Popen('aplay', stdin=PIPE).stdin
-    buffer = time()
     buffer_increment = 1
+    #freqs = [523.25,587.33,659.26,698.46,783.99,880.,987.77,1046.5]
+    t = time()
+    phase = 0
     while not self._halt:
-      freq = 440 + 220 * (self.tmp - 15)
-      print(freq)
-      for i in range(1, 8000 * buffer_increment):
-        audio.write(chr(int(sin(freq*i) * 50 + 128)))
-      buffer += buffer_increment
-      while buffer - time() > buffer_increment * 1.2:
-        sleep(buffer_increment / 5)
+      print(self.tmp)
+      freq = 500 + 500 * ( 1 - ( self.tmp - 21 ) / 9 )
+      now = time()
+      while (t < now + 0.005):
+        t = t + 1. / 8000
+        phase = ( phase + ( freq * 2 * pi / 8000 ) ) % ( 2 * pi )
+        audio.write( chr( int( sin( phase ) * 50 + 128 ) ) )
+      sleep(.001)
 
   def halt(self):
     self._halt = True
